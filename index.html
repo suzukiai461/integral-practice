@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +19,6 @@
   <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
   </script>
 </head>
-
 <body>
   <div id="app">
     <div class="card">
@@ -38,7 +36,6 @@
           </div>
         </div>
       </div>
-
       <div id="result-container" style="display: none;">
         <div class="result-screen">
           <h1>修行完了だ！</h1>
@@ -50,89 +47,85 @@
       </div>
     </div>
   </div>
-
   <script>
-    // 問題データ (不定積分と定積分のミックス)
+    // 問題データ (基本・展開の不定積分、基本・偶関数奇関数の定積分)
     const problems = [
       {
         id: 1,
-        question: "\\int (3x^2 + 4x - 5) dx",
-        options: ["x^3 + 2x^2 - 5x + C", "3x^3 + 4x^2 - 5x + C", "x^3 + 4x^2 + C", "x^3 + 2x^2 + C"],
+        question: "\\int (x^2 + 3x + 2) dx",
+        options: ["\\frac{1}{3}x^3 + \\frac{3}{2}x^2 + 2x + C", "x^3 + 3x^2 + 2x + C", "\\frac{1}{3}x^3 + 3x^2 + C", "x^2 + 3x + C"],
         answer: 0,
-        explanation: "\\int (3x^2 + 4x - 5) dx = x^3 + 2x^2 - 5x + C だぜ！"
+        explanation: "\\int (x^2 + 3x + 2) dx = \\frac{1}{3}x^3 + \\frac{3}{2}x^2 + 2x + C だぜ！"
       },
       {
         id: 2,
-        question: "\\int_0^2 (3x^2 - 2x) dx",
-        options: ["4", "6", "8", "2"],
+        question: "\\int (x-1)(x+3) dx",
+        options: ["\\frac{1}{3}x^3 + x^2 - 3x + C", "x^2 + 2x - 3 + C", "\\frac{1}{3}x^3 + 2x^2 - 3x + C", "x^3 + x^2 - 3x + C"],
         answer: 0,
-        explanation: "[x^3 - x^2]_0^2 = (8-4) - 0 = 4 だな！"
+        explanation: "展開すると x^2+2x-3。積分して \\frac{1}{3}x^3 + x^2 - 3x + C だな！"
       },
       {
         id: 3,
-        question: "\\int (2x-3)^2 dx",
-        options: ["\\frac{4}{3}x^3 - 6x^2 + 9x + C", "4x^2 - 12x + 9 + C", "\\frac{2}{3}(2x-3)^3 + C", "4x^3 - 6x^2 + C"],
+        question: "\\int (2x+1)^2 dx",
+        options: ["\\frac{4}{3}x^3 + 2x^2 + x + C", "4x^2 + 4x + 1 + C", "\\frac{4}{3}x^3 + 4x^2 + x + C", "2x^3 + 2x^2 + x + C"],
         answer: 0,
-        explanation: "(2x-3)^2 = 4x^2 - 12x + 9 なので、積分すると \\frac{4}{3}x^3 - 6x^2 + 9x + C になるぜ！"
+        explanation: "展開すると 4x^2+4x+1。積分して \\frac{4}{3}x^3 + 2x^2 + x + C だぜ！"
       },
       {
         id: 4,
-        question: "\\int_{-1}^1 (x^3 + 5x^2 + 2x) dx",
-        options: ["\\frac{10}{3}", "\\frac{5}{3}", "0", "4"],
+        question: "\\int 3(x+2)(x-2) dx",
+        options: ["x^3 - 12x + C", "3x^2 - 12 + C", "x^3 - 4x + C", "3x^3 - 12x + C"],
         answer: 0,
-        explanation: "奇関数は0になるから、2\\int_0^1 5x^2 dx = 2[\\frac{5}{3}x^3]_0^1 = \\frac{10}{3} だぜ！"
+        explanation: "3(x^2-4) = 3x^2-12。積分して x^3 - 12x + C だな！"
       },
       {
         id: 5,
-        question: "\\int (x+1)(x-2) dx",
-        options: ["\\frac{1}{3}x^3 - \\frac{1}{2}x^2 - 2x + C", "x^2 - x - 2 + C", "\\frac{1}{3}x^3 - 2x + C", "x^3 - x^2 - 2x + C"],
+        question: "\\int (3x^2 - 6x) dx",
+        options: ["x^3 - 3x^2 + C", "3x^3 - 6x^2 + C", "x^3 - 6x^2 + C", "x^3 - 2x^2 + C"],
         answer: 0,
-        explanation: "展開すると x^2-x-2。積分して \\frac{1}{3}x^3 - \\frac{1}{2}x^2 - 2x + C だ！"
+        explanation: "\\int (3x^2 - 6x) dx = x^3 - 3x^2 + C だぜ！"
       },
       {
         id: 6,
-        question: "\\int_1^2 (x-1)(x+1) dx",
-        options: ["\\frac{4}{3}", "1", "\\frac{2}{3}", "2"],
+        question: "\\int_1^3 (2x - 1) dx",
+        options: ["6", "4", "8", "2"],
         answer: 0,
-        explanation: "\\int_1^2 (x^2-1) dx = [\\frac{1}{3}x^3 - x]_1^2 = (\\frac{8}{3}-2) - (\\frac{1}{3}-1) = \\frac{2}{3} - (-\\frac{2}{3}) = \\frac{4}{3} だな！"
+        explanation: "[x^2 - x]_1^3 = (9-3) - (1-1) = 6 だな！"
       },
       {
         id: 7,
-        question: "\\frac{d}{dx} \\int_3^x (t^2 - t + 1) dt",
-        options: ["x^2 - x + 1", "t^2 - t + 1", "x^3 - x^2 + x", "0"],
+        question: "\\int_0^1 (3x^2 + 4x) dx",
+        options: ["3", "1", "2", "4"],
         answer: 0,
-        explanation: "定積分の微分の性質より、中身がxの関数として出てくるぜ！"
+        explanation: "[x^3 + 2x^2]_0^1 = 1 + 2 = 3 だぜ！"
       },
       {
         id: 8,
-        question: "\\int_0^2 (x^2+2) dx + \\int_2^3 (x^2+2) dx",
-        options: ["15", "11", "9", "13"],
+        question: "\\int_{-1}^1 (x^3 + 3x^2 + x) dx",
+        options: ["2", "4", "0", "1"],
         answer: 0,
-        explanation: "\\int_0^3 (x^2+2) dx = [\\frac{1}{3}x^3 + 2x]_0^3 = (9+6) - 0 = 15 だぜ！"
+        explanation: "奇関数(x^3, x)は0。\\int_{-1}^1 3x^2 dx = [x^3]_{-1}^1 = 1 - (-1) = 2 だ！"
       },
       {
         id: 9,
-        question: "f'(x) = 2x + 1, f(0) = 3 のとき f(x)",
-        options: ["x^2 + x + 3", "x^2 + x", "2x^2 + x + 3", "x^2 + 3"],
+        question: "\\int_{-2}^2 (x^2 - 1) dx",
+        options: ["\\frac{4}{3}", "\\frac{2}{3}", "\\frac{8}{3}", "0"],
         answer: 0,
-        explanation: "\\int (2x+1) dx = x^2+x+C。f(0)=3 より C=3 なので、x^2+x+3 だな！"
+        explanation: "2\\int_0^2 (x^2-1) dx = 2[\\frac{1}{3}x^3 - x]_0^2 = 2(\\frac{8}{3}-2) = 2(\\frac{2}{3}) = \\frac{4}{3} だぜ！"
       },
       {
         id: 10,
-        question: "\\int_{-2}^2 (x^2 - 3) dx",
-        options: ["-\\frac{20}{3}", "-\\frac{10}{3}", "0", "-4"],
+        question: "\\int_0^2 (x+1)^2 dx",
+        options: ["\\frac{26}{3}", "\\frac{8}{3}", "9", "\\frac{20}{3}"],
         answer: 0,
-        explanation: "2\\int_0^2 (x^2-3) dx = 2[\\frac{1}{3}x^3 - 3x]_0^2 = 2(\\frac{8}{3}-6) = 2(-\\frac{10}{3}) = -\\frac{20}{3} だぜ！"
+        explanation: "[\\frac{1}{3}(x+1)^3]_0^2 = \\frac{1}{3}(27 - 1) = \\frac{26}{3} だな！"
       }
     ];
-
     let currentQuestionIndex = 0;
     let score = 0;
     let userAnswers = [];
-
     // GASのWebアプリURL
     const GAS_URL = 'https://script.google.com/macros/s/AKfycby5_02cpyoreNlQifjv0huHPtWKL_ij9vOoSO0K0LvaSqEJuz9M3sgTaWT-jr76jgKu/exec';
-
     const questionText = document.getElementById('question-text');
     const optionsGrid = document.getElementById('options-grid');
     const progressFill = document.getElementById('progress-fill');
@@ -142,7 +135,6 @@
     const resultMessage = document.getElementById('result-message');
     const sendingStatus = document.getElementById('sending-status');
     const restartBtn = document.getElementById('restart-btn');
-
     function initQuiz() {
       currentQuestionIndex = 0;
       score = 0;
@@ -151,11 +143,9 @@
       resultContainer.style.display = 'none';
       showQuestion();
     }
-
     function showQuestion() {
       const problem = problems[currentQuestionIndex];
       questionText.innerHTML = `問 ${currentQuestionIndex + 1}: <br> $${problem.question}$`;
-
       optionsGrid.innerHTML = '';
       problem.options.forEach((option, index) => {
         const btn = document.createElement('button');
@@ -164,35 +154,29 @@
         btn.onclick = () => handleAnswer(index);
         optionsGrid.appendChild(btn);
       });
-
       // MathJaxに再レンダリングを依頼
       if (window.MathJax && window.MathJax.typesetPromise) {
         window.MathJax.typesetPromise();
       }
-
       // プログレスバー更新
       const progress = ((currentQuestionIndex) / problems.length) * 100;
       progressFill.style.width = `${progress}%`;
     }
-
     async function handleAnswer(selectedIndex) {
       const problem = problems[currentQuestionIndex];
       const isCorrect = selectedIndex === problem.answer;
-
       if (isCorrect) score++;
       userAnswers.push({
         questionId: problem.id,
         selected: problem.options[selectedIndex],
         correct: isCorrect
       });
-
       // ボタンの色を変えるフィードバック
       const btns = optionsGrid.querySelectorAll('.option-btn');
       btns[selectedIndex].classList.add(isCorrect ? 'correct' : 'wrong');
       if (!isCorrect) {
         btns[problem.answer].classList.add('correct');
       }
-
       // 少し待ってから次の問題へ
       setTimeout(() => {
         currentQuestionIndex++;
@@ -203,14 +187,11 @@
         }
       }, 1000);
     }
-
     function showResult() {
       quizContainer.style.display = 'none';
       resultContainer.style.display = 'block';
       progressFill.style.width = '100%';
-
       finalScore.innerText = `${score} / ${problems.length}`;
-
       if (score === 10) {
         resultMessage.innerText = "完璧だ！お前はもう積分マスターだってばよ！";
       } else if (score >= 7) {
@@ -218,25 +199,20 @@
       } else {
         resultMessage.innerText = "まだまだ修行が必要だな。諦めんなよ！";
       }
-
       sendToSpreadsheet();
     }
-
     async function sendToSpreadsheet() {
       if (!GAS_URL) {
         sendingStatus.innerText = "（スプレッドシート連携URLが未設定なので送信をスキップしたぜ）";
         return;
       }
-
       sendingStatus.innerText = "結果をスプレッドシートに送信中...";
-
       const data = {
         score: score,
         total: problems.length,
         timestamp: new Date().toISOString(),
         answers: userAnswers
       };
-
       try {
         const response = await fetch(GAS_URL, {
           method: 'POST',
@@ -252,12 +228,9 @@
         sendingStatus.innerText = "送信に失敗しちまった...URLを確認してくれ。";
       }
     }
-
     restartBtn.onclick = initQuiz;
-
     // 初期化
     window.onload = initQuiz;
   </script>
 </body>
-
 </html>
