@@ -163,6 +163,8 @@
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.innerHTML = `$${option}$`;
+        // カスタムデータ属性に内容を保存しておくぜ
+        btn.dataset.content = option;
         btn.onclick = () => handleAnswer(option); // 選択した「内容」で判定
         optionsGrid.appendChild(btn);
       });
@@ -186,19 +188,16 @@
       // ボタンの色を変えるフィードバック
       const btns = optionsGrid.querySelectorAll('.option-btn');
       btns.forEach(btn => {
-        // ボタンに表示されているテキスト(MathJax適用前の想定だが、HTML文字列で比較)
-        // ここでは selectedContent と比較して正誤判定フィードバックを出す
-        if (btn.innerText.includes(selectedContent.replace(/\\/g, ""))) { // 簡易的なマッチング
+        btn.disabled = true; // 連続クリック防止
+        const content = btn.dataset.content;
+        // クリックしたボタンへのフィードバック
+        if (content === selectedContent) {
           btn.classList.add(isCorrect ? 'correct' : 'wrong');
         }
-        if (!isCorrect && btn.innerText.includes(problem.answerContent.replace(/\\/g, ""))) {
+        // 正解のボタンを常に緑にする（不正解を選んだ時も正解を教えるぜ）
+        if (content === problem.answerContent) {
           btn.classList.add('correct');
         }
-      });
-      // より確実なフィードバック表示 (全ボタン走査して正解を明示)
-      // MathJaxのタグの中身を読むのは難しいので、クリック時のselectedContentでループを回す
-      btns.forEach(btn => {
-        btn.disabled = true; // 連続クリック防止
       });
       // 少し待ってから次の問題へ
       setTimeout(() => {
