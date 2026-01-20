@@ -49,75 +49,76 @@
   </div>
   <script>
     // 問題データ (基本・展開の不定積分、基本・偶関数奇関数の定積分)
+    // answerはoptions配列の添字ではなく、正解の文字列そのものを持たせるように変更するぜ！
     const problems = [
       {
         id: 1,
         question: "\\int (x^2 + 3x + 2) dx",
         options: ["\\frac{1}{3}x^3 + \\frac{3}{2}x^2 + 2x + C", "x^3 + 3x^2 + 2x + C", "\\frac{1}{3}x^3 + 3x^2 + C", "x^2 + 3x + C"],
-        answer: 0,
+        answerContent: "\\frac{1}{3}x^3 + \\frac{3}{2}x^2 + 2x + C",
         explanation: "\\int (x^2 + 3x + 2) dx = \\frac{1}{3}x^3 + \\frac{3}{2}x^2 + 2x + C だぜ！"
       },
       {
         id: 2,
         question: "\\int (x-1)(x+3) dx",
         options: ["\\frac{1}{3}x^3 + x^2 - 3x + C", "x^2 + 2x - 3 + C", "\\frac{1}{3}x^3 + 2x^2 - 3x + C", "x^3 + x^2 - 3x + C"],
-        answer: 0,
+        answerContent: "\\frac{1}{3}x^3 + x^2 - 3x + C",
         explanation: "展開すると x^2+2x-3。積分して \\frac{1}{3}x^3 + x^2 - 3x + C だな！"
       },
       {
         id: 3,
         question: "\\int (2x+1)^2 dx",
         options: ["\\frac{4}{3}x^3 + 2x^2 + x + C", "4x^2 + 4x + 1 + C", "\\frac{4}{3}x^3 + 4x^2 + x + C", "2x^3 + 2x^2 + x + C"],
-        answer: 0,
+        answerContent: "\\frac{4}{3}x^3 + 2x^2 + x + C",
         explanation: "展開すると 4x^2+4x+1。積分して \\frac{4}{3}x^3 + 2x^2 + x + C だぜ！"
       },
       {
         id: 4,
         question: "\\int 3(x+2)(x-2) dx",
         options: ["x^3 - 12x + C", "3x^2 - 12 + C", "x^3 - 4x + C", "3x^3 - 12x + C"],
-        answer: 0,
+        answerContent: "x^3 - 12x + C",
         explanation: "3(x^2-4) = 3x^2-12。積分して x^3 - 12x + C だな！"
       },
       {
         id: 5,
         question: "\\int (3x^2 - 6x) dx",
         options: ["x^3 - 3x^2 + C", "3x^3 - 6x^2 + C", "x^3 - 6x^2 + C", "x^3 - 2x^2 + C"],
-        answer: 0,
+        answerContent: "x^3 - 3x^2 + C",
         explanation: "\\int (3x^2 - 6x) dx = x^3 - 3x^2 + C だぜ！"
       },
       {
         id: 6,
         question: "\\int_1^3 (2x - 1) dx",
         options: ["6", "4", "8", "2"],
-        answer: 0,
+        answerContent: "6",
         explanation: "[x^2 - x]_1^3 = (9-3) - (1-1) = 6 だな！"
       },
       {
         id: 7,
         question: "\\int_0^1 (3x^2 + 4x) dx",
         options: ["3", "1", "2", "4"],
-        answer: 0,
+        answerContent: "3",
         explanation: "[x^3 + 2x^2]_0^1 = 1 + 2 = 3 だぜ！"
       },
       {
         id: 8,
         question: "\\int_{-1}^1 (x^3 + 3x^2 + x) dx",
         options: ["2", "4", "0", "1"],
-        answer: 0,
+        answerContent: "2",
         explanation: "奇関数(x^3, x)は0。\\int_{-1}^1 3x^2 dx = [x^3]_{-1}^1 = 1 - (-1) = 2 だ！"
       },
       {
         id: 9,
         question: "\\int_{-2}^2 (x^2 - 1) dx",
         options: ["\\frac{4}{3}", "\\frac{2}{3}", "\\frac{8}{3}", "0"],
-        answer: 0,
+        answerContent: "\\frac{4}{3}",
         explanation: "2\\int_0^2 (x^2-1) dx = 2[\\frac{1}{3}x^3 - x]_0^2 = 2(\\frac{8}{3}-2) = 2(\\frac{2}{3}) = \\frac{4}{3} だぜ！"
       },
       {
         id: 10,
         question: "\\int_0^2 (x+1)^2 dx",
         options: ["\\frac{26}{3}", "\\frac{8}{3}", "9", "\\frac{20}{3}"],
-        answer: 0,
+        answerContent: "\\frac{26}{3}",
         explanation: "[\\frac{1}{3}(x+1)^3]_0^2 = \\frac{1}{3}(27 - 1) = \\frac{26}{3} だな！"
       }
     ];
@@ -143,15 +144,26 @@
       resultContainer.style.display = 'none';
       showQuestion();
     }
+    // 配列をシャッフルする関数 (Fisher-Yates)
+    function shuffleArray(array) {
+      const newArr = [...array];
+      for (let i = newArr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+      }
+      return newArr;
+    }
     function showQuestion() {
       const problem = problems[currentQuestionIndex];
       questionText.innerHTML = `問 ${currentQuestionIndex + 1}: <br> $${problem.question}$`;
+      // 選択肢をランダムに並び替える
+      const shuffledOptions = shuffleArray(problem.options);
       optionsGrid.innerHTML = '';
-      problem.options.forEach((option, index) => {
+      shuffledOptions.forEach((option) => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.innerHTML = `$${option}$`;
-        btn.onclick = () => handleAnswer(index);
+        btn.onclick = () => handleAnswer(option); // 選択した「内容」で判定
         optionsGrid.appendChild(btn);
       });
       // MathJaxに再レンダリングを依頼
@@ -162,21 +174,32 @@
       const progress = ((currentQuestionIndex) / problems.length) * 100;
       progressFill.style.width = `${progress}%`;
     }
-    async function handleAnswer(selectedIndex) {
+    async function handleAnswer(selectedContent) {
       const problem = problems[currentQuestionIndex];
-      const isCorrect = selectedIndex === problem.answer;
+      const isCorrect = selectedContent === problem.answerContent;
       if (isCorrect) score++;
       userAnswers.push({
         questionId: problem.id,
-        selected: problem.options[selectedIndex],
+        selected: selectedContent,
         correct: isCorrect
       });
       // ボタンの色を変えるフィードバック
       const btns = optionsGrid.querySelectorAll('.option-btn');
-      btns[selectedIndex].classList.add(isCorrect ? 'correct' : 'wrong');
-      if (!isCorrect) {
-        btns[problem.answer].classList.add('correct');
-      }
+      btns.forEach(btn => {
+        // ボタンに表示されているテキスト(MathJax適用前の想定だが、HTML文字列で比較)
+        // ここでは selectedContent と比較して正誤判定フィードバックを出す
+        if (btn.innerText.includes(selectedContent.replace(/\\/g, ""))) { // 簡易的なマッチング
+          btn.classList.add(isCorrect ? 'correct' : 'wrong');
+        }
+        if (!isCorrect && btn.innerText.includes(problem.answerContent.replace(/\\/g, ""))) {
+          btn.classList.add('correct');
+        }
+      });
+      // より確実なフィードバック表示 (全ボタン走査して正解を明示)
+      // MathJaxのタグの中身を読むのは難しいので、クリック時のselectedContentでループを回す
+      btns.forEach(btn => {
+        btn.disabled = true; // 連続クリック防止
+      });
       // 少し待ってから次の問題へ
       setTimeout(() => {
         currentQuestionIndex++;
