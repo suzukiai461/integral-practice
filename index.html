@@ -19,240 +19,307 @@
   <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
   </script>
 </head>
-<body>
-  <div id="app">
-    <div class="card">
-      <div id="quiz-container">
-        <h1>積分マスター - 数学Ⅱ</h1>
-        <div class="progress-bar">
-          <div id="progress-fill" class="progress-fill"></div>
-        </div>
-        <div id="question-area">
-          <div id="question-text" class="question-text">
-            データを読み込み中だ...
-          </div>
-          <div id="options-grid" class="options-grid">
-            <!-- Options will be dynamic -->
-          </div>
-        </div>
+<style>
+  .start-screen {
+    text-align: center;
+  }
+  .input-group {
+    margin: 24px 0;
+    text-align: left;
+  }
+  .input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+  .input-field {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-field:focus {
+    border-color: var(--primary-color);
+  }
+</style>
+<div id="app">
+  <div class="card">
+    <div id="start-container" class="start-screen">
+      <h1>積分マスター - 数学Ⅱ</h1>
+      <p>Googleアカウントの自動収集を設定したぜ！<br>「修行開始」を押すとログイン画面が出る場合があるってばよ！</p>
+      <button id="start-btn" class="btn-primary">修行を開始する</button>
+    </div>
+    <div id="quiz-container" style="display: none;">
+      <h1 id="quiz-title">積分マスター - 数学Ⅱ</h1>
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
       </div>
-      <div id="result-container" style="display: none;">
-        <div class="result-screen">
-          <h1>修行完了だ！</h1>
-          <div id="final-score" class="score">0 / 10</div>
-          <p id="result-message"></p>
-          <div id="sending-status" style="margin-top: 20px; font-size: 0.9rem; opacity: 0.8;"></div>
-          <button id="restart-btn" class="btn-primary">もう一度挑戦する</button>
+      <div id="question-area">
+        <div id="question-text" class="question-text">
+          データを読み込み中だ...
+        </div>
+        <div id="options-grid" class="options-grid">
+          <!-- Options will be dynamic -->
         </div>
       </div>
     </div>
+    <div id="result-container" style="display: none;">
+      <div class="result-screen">
+        <h1>修行完了だ！</h1>
+        <div id="final-score" class="score">0 / 10</div>
+        <p id="result-message"></p>
+        <div id="sending-status" style="margin-top: 20px; font-size: 0.9rem; opacity: 0.8;"></div>
+        <button id="restart-btn" class="btn-primary">もう一度挑戦する</button>
+      </div>
+    </div>
   </div>
-  <script>
-    // 問題データ (基本・展開の不定積分、基本・偶関数奇関数の定積分)
-    // answerはoptions配列の添字ではなく、正解の文字列そのものを持たせるように変更するぜ！
-    const problems = [
-      {
-        id: 1,
-        question: "\\int (x^2 + 3x + 2) dx",
-        options: ["\\frac{1}{3}x^3 + \\frac{3}{2}x^2 + 2x + C", "x^3 + 3x^2 + 2x + C", "\\frac{1}{3}x^3 + 3x^2 + C", "x^2 + 3x + C"],
-        answerContent: "\\frac{1}{3}x^3 + \\frac{3}{2}x^2 + 2x + C",
-        explanation: "\\int (x^2 + 3x + 2) dx = \\frac{1}{3}x^3 + \\frac{3}{2}x^2 + 2x + C だぜ！"
-      },
-      {
-        id: 2,
-        question: "\\int (x-1)(x+3) dx",
-        options: ["\\frac{1}{3}x^3 + x^2 - 3x + C", "x^2 + 2x - 3 + C", "\\frac{1}{3}x^3 + 2x^2 - 3x + C", "x^3 + x^2 - 3x + C"],
-        answerContent: "\\frac{1}{3}x^3 + x^2 - 3x + C",
-        explanation: "展開すると x^2+2x-3。積分して \\frac{1}{3}x^3 + x^2 - 3x + C だな！"
-      },
-      {
-        id: 3,
-        question: "\\int (2x+1)^2 dx",
-        options: ["\\frac{4}{3}x^3 + 2x^2 + x + C", "4x^2 + 4x + 1 + C", "\\frac{4}{3}x^3 + 4x^2 + x + C", "2x^3 + 2x^2 + x + C"],
-        answerContent: "\\frac{4}{3}x^3 + 2x^2 + x + C",
-        explanation: "展開すると 4x^2+4x+1。積分して \\frac{4}{3}x^3 + 2x^2 + x + C だぜ！"
-      },
-      {
-        id: 4,
-        question: "\\int 3(x+2)(x-2) dx",
-        options: ["x^3 - 12x + C", "3x^2 - 12 + C", "x^3 - 4x + C", "3x^3 - 12x + C"],
-        answerContent: "x^3 - 12x + C",
-        explanation: "3(x^2-4) = 3x^2-12。積分して x^3 - 12x + C だな！"
-      },
-      {
-        id: 5,
-        question: "\\int (3x^2 - 6x) dx",
-        options: ["x^3 - 3x^2 + C", "3x^3 - 6x^2 + C", "x^3 - 6x^2 + C", "x^3 - 2x^2 + C"],
-        answerContent: "x^3 - 3x^2 + C",
-        explanation: "\\int (3x^2 - 6x) dx = x^3 - 3x^2 + C だぜ！"
-      },
-      {
-        id: 6,
-        question: "\\int_1^3 (2x - 1) dx",
-        options: ["6", "4", "8", "2"],
-        answerContent: "6",
-        explanation: "[x^2 - x]_1^3 = (9-3) - (1-1) = 6 だな！"
-      },
-      {
-        id: 7,
-        question: "\\int_0^1 (3x^2 + 4x) dx",
-        options: ["3", "1", "2", "4"],
-        answerContent: "3",
-        explanation: "[x^3 + 2x^2]_0^1 = 1 + 2 = 3 だぜ！"
-      },
-      {
-        id: 8,
-        question: "\\int_{-1}^1 (x^3 + 3x^2 + x) dx",
-        options: ["2", "4", "0", "1"],
-        answerContent: "2",
-        explanation: "奇関数(x^3, x)は0。\\int_{-1}^1 3x^2 dx = [x^3]_{-1}^1 = 1 - (-1) = 2 だ！"
-      },
-      {
-        id: 9,
-        question: "\\int_{-2}^2 (x^2 - 1) dx",
-        options: ["\\frac{4}{3}", "\\frac{2}{3}", "\\frac{8}{3}", "0"],
-        answerContent: "\\frac{4}{3}",
-        explanation: "2\\int_0^2 (x^2-1) dx = 2[\\frac{1}{3}x^3 - x]_0^2 = 2(\\frac{8}{3}-2) = 2(\\frac{2}{3}) = \\frac{4}{3} だぜ！"
-      },
-      {
-        id: 10,
-        question: "\\int_0^2 (x+1)^2 dx",
-        options: ["\\frac{26}{3}", "\\frac{8}{3}", "9", "\\frac{20}{3}"],
-        answerContent: "\\frac{26}{3}",
-        explanation: "[\\frac{1}{3}(x+1)^3]_0^2 = \\frac{1}{3}(27 - 1) = \\frac{26}{3} だな！"
+</div>
+<script>
+  // 不定積分 50問
+  const indefiniteIntegrals = [
+    { id: 1, question: "\\int (x^2 + 5) dx", options: ["\\frac{1}{3}x^3 + 5x + C", "x^3 + 5x + C", "\\frac{1}{3}x^3 + C", "3x^3 + 5x + C"], answerContent: "\\frac{1}{3}x^3 + 5x + C", explanation: "" },
+    { id: 2, question: "\\int (2x - 3) dx", options: ["x^2 - 3x + C", "2x^2 - 3x + C", "x^2 + C", "x^2 - 3 + C"], answerContent: "x^2 - 3x + C", explanation: "" },
+    { id: 3, question: "\\int (x+2)(x+4) dx", options: ["\\frac{1}{3}x^3 + 3x^2 + 8x + C", "x^2 + 6x + 8 + C", "\\frac{1}{3}x^3 + 6x^2 + 8x + C", "x^3 + 3x^2 + 8x + C"], answerContent: "\\frac{1}{3}x^3 + 3x^2 + 8x + C", explanation: "x^2+6x+8を積分" },
+    { id: 4, question: "\\int (3x^2 - 4x + 1) dx", options: ["x^3 - 2x^2 + x + C", "3x^3 - 4x^2 + x + C", "x^3 - 4x^2 + x + C", "x^3 - 2x^2 + C"], answerContent: "x^3 - 2x^2 + x + C", explanation: "" },
+    { id: 5, question: "\\int (x-1)^2 dx", options: ["\\frac{1}{3}x^3 - x^2 + x + C", "\\frac{1}{3}(x-1)^3 + C", "\\frac{1}{3}x^3 + x^2 + x + C", "x^3 - x^2 + x + C"], answerContent: "\\frac{1}{3}x^3 - x^2 + x + C", explanation: "展開するか公式利用" },
+    { id: 6, question: "\\int (6x^2 - 2x + 5) dx", options: ["2x^3 - x^2 + 5x + C", "6x^3 - 2x^2 + 5x + C", "2x^3 - 2x^2 + 5x + C", "3x^3 - x^2 + 5x + C"], answerContent: "2x^3 - x^2 + 5x + C", explanation: "" },
+    { id: 7, question: "\\int (x+5)(x-5) dx", options: ["\\frac{1}{3}x^3 - 25x + C", "x^2 - 25 + C", "\\frac{1}{3}x^3 + 25x + C", "x^3 - 25x + C"], answerContent: "\\frac{1}{3}x^3 - 25x + C", explanation: "x^2-25を積分" },
+    { id: 8, question: "\\int (x^2 - 2x + 3) dx", options: ["\\frac{1}{3}x^3 - x^2 + 3x + C", "x^3 - x^2 + 3x + C", "\\frac{1}{3}x^3 - 2x^2 + 3x + C", "\\frac{1}{3}x^3 - x^2 + C"], answerContent: "\\frac{1}{3}x^3 - x^2 + 3x + C", explanation: "" },
+    { id: 9, question: "\\int (4x^3 - 3x^2 + 2x) dx", options: ["x^4 - x^3 + x^2 + C", "4x^4 - 3x^3 + 2x^2 + C", "x^4 - x^3 + x + C", "x^4 - 3x^3 + C"], answerContent: "x^4 - x^3 + x^2 + C", explanation: "" },
+    { id: 10, question: "\\int (x+1)^3 dx", options: ["\\frac{1}{4}x^4 + x^3 + \\frac{3}{2}x^2 + x + C", "\\frac{1}{4}(x+1)^4 + C", "x^4 + x^3 + x^2 + x + C", "\\frac{1}{3}(x+1)^3 + C"], answerContent: "\\frac{1}{4}x^4 + x^3 + \\frac{3}{2}x^2 + x + C", explanation: "" },
+    { id: 11, question: "\\int (3x-2)^2 dx", options: ["3x^3 - 6x^2 + 4x + C", "9x^2 - 12x + 4 + C", "\\frac{1}{3}(3x-2)^3 + C", "3x^3 - 12x + 4 + C"], answerContent: "3x^3 - 6x^2 + 4x + C", explanation: "9x^2-12x+4を積分" },
+    { id: 12, question: "\\int x(x^2 + 1) dx", options: ["\\frac{1}{4}x^4 + \\frac{1}{2}x^2 + C", "x^3 + x + C", "\\frac{1}{3}x^3 + x + C", "\\frac{1}{4}x^4 + C"], answerContent: "\\frac{1}{4}x^4 + \\frac{1}{2}x^2 + C", explanation: "x^3+xを積分" },
+    { id: 13, question: "\\int (x^2 - x) dx", options: ["\\frac{1}{3}x^3 - \\frac{1}{2}x^2 + C", "x^3 - x^2 + C", "\\frac{1}{3}x^3 - x^2 + C", "\\frac{1}{2}x^2 - x + C"], answerContent: "\\frac{1}{3}x^3 - \\frac{1}{2}x^2 + C", explanation: "" },
+    { id: 14, question: "\\int (2x+3)^2 dx", options: ["\\frac{4}{3}x^3 + 6x^2 + 9x + C", "4x^2 + 12x + 9 + C", "4x^3 + 6x^2 + 9x + C", "\\frac{4}{3}x^3 + 12x^2 + 9x + C"], answerContent: "\\frac{4}{3}x^3 + 6x^2 + 9x + C", explanation: "4x^2+12x+9を積分" },
+    { id: 15, question: "\\int (x^2 - 4x + 4) dx", options: ["\\frac{1}{3}x^3 - 2x^2 + 4x + C", "x^3 - 2x^2 + 4x + C", "\\frac{1}{3}(x-2)^3 + C", "\\frac{1}{3}x^3 - 4x + C"], answerContent: "\\frac{1}{3}x^3 - 2x^2 + 4x + C", explanation: "" },
+    { id: 16, question: "\\int (1 - 2x - 3x^2) dx", options: ["x - x^2 - x^3 + C", "1 - x^2 - x^3 + C", "x - 2x^2 - 3x^3 + C", "-x^3 - x^2 + x + C"], answerContent: "x - x^2 - x^3 + C", explanation: "" },
+    { id: 17, question: "\\int (x-2)(x+2) dx", options: ["\\frac{1}{3}x^3 - 4x + C", "x^2 - 4 + C", "\\frac{1}{3}x^3 + 4x + C", "x^3 - 4x + C"], answerContent: "\\frac{1}{3}x^3 - 4x + C", explanation: "x^2-4を積分" },
+    { id: 18, question: "\\int (x^2 + x + 1) dx", options: ["\\frac{1}{3}x^3 + \\frac{1}{2}x^2 + x + C", "x^3 + x^2 + x + C", "\\frac{1}{3}x^3 + x^2 + x + C", "\\frac{1}{3}x^3 + \\frac{1}{2}x^2 + C"], answerContent: "\\frac{1}{3}x^3 + \\frac{1}{2}x^2 + x + C", explanation: "" },
+    { id: 19, question: "\\int (x^3 - 1) dx", options: ["\\frac{1}{4}x^4 - x + C", "x^4 - x + C", "\\frac{1}{4}x^4 + C", "\\frac{1}{3}x^3 - x + C"], answerContent: "\\frac{1}{4}x^4 - x + C", explanation: "" },
+    { id: 20, question: "\\int (2x^2 - 4x + 6) dx", options: ["\\frac{2}{3}x^3 - 2x^2 + 6x + C", "2x^3 - 4x^2 + 6x + C", "\\frac{2}{3}x^3 - 4x + 6 + C", "x^3 - 2x^2 + 6x + C"], answerContent: "\\frac{2}{3}x^3 - 2x^2 + 6x + C", explanation: "" },
+    { id: 21, question: "\\int x(x-1) dx", options: ["\\frac{1}{3}x^3 - \\frac{1}{2}x^2 + C", "x^2 - x + C", "\\frac{1}{3}x^3 - x^2 + C", "\\frac{1}{2}x^2 - x + C"], answerContent: "\\frac{1}{3}x^3 - \\frac{1}{2}x^2 + C", explanation: "x^2-xを積分" },
+    { id: 22, question: "\\int (x+3)^2 dx", options: ["\\frac{1}{3}x^3 + 3x^2 + 9x + C", "x^2 + 6x + 9 + C", "\\frac{1}{3}(x+3)^3 + C", "x^3 + 3x^2 + 9x + C"], answerContent: "\\frac{1}{3}x^3 + 3x^2 + 9x + C", explanation: "x^2+6x+9を積分" },
+    { id: 23, question: "\\int (x^2 + 2x + 1) dx", options: ["\\frac{1}{3}x^3 + x^2 + x + C", "x^3 + 2x^2 + x + C", "\\frac{1}{3}(x+1)^3 + C", "\\frac{1}{3}x^3 + x^2 + C"], answerContent: "\\frac{1}{3}x^3 + x^2 + x + C", explanation: "" },
+    { id: 24, question: "\\int (3x^2 - 1) dx", options: ["x^3 - x + C", "3x^3 - x + C", "x^3 + C", "x^3 - 1 + C"], answerContent: "x^3 - x + C", explanation: "" },
+    { id: 25, question: "\\int (x^2 - 3x + 4) dx", options: ["\\frac{1}{3}x^3 - \\frac{3}{2}x^2 + 4x + C", "x^3 - 3x^2 + 4x + C", "\\frac{1}{3}x^3 - 3x + 4 + C", "\\frac{1}{3}x^3 - \\frac{3}{2}x^2 + C"], answerContent: "\\frac{1}{3}x^3 - \\frac{3}{2}x^2 + 4x + C", explanation: "" },
+    { id: 26, question: "\\int (x+1)(x-1) dx", options: ["\\frac{1}{3}x^3 - x + C", "x^2 - 1 + C", "\\frac{1}{3}x^3 + x + C", "x^3 - x + C"], answerContent: "\\frac{1}{3}x^3 - x + C", explanation: "x^2-1を積分" },
+    { id: 27, question: "\\int (2x^2+x) dx", options: ["\\frac{2}{3}x^3 + \\frac{1}{2}x^2 + C", "2x^3 + x^2 + C", "\\frac{2}{3}x^3 + x^2 + C", "x^3 + \\frac{1}{2}x^2 + C"], answerContent: "\\frac{2}{3}x^3 + \\frac{1}{2}x^2 + C", explanation: "" },
+    { id: 28, question: "\\int (3x+2)^2 dx", options: ["3x^3 + 6x^2 + 4x + C", "9x^2 + 12x + 4 + C", "3x^3 + 12x + 4 + C", "\\frac{1}{3}(3x+2)^3 + C"], answerContent: "3x^3 + 6x^2 + 4x + C", explanation: "9x^2+12x+4を積分" },
+    { id: 29, question: "\\int (x^2 - 5x + 6) dx", options: ["\\frac{1}{3}x^3 - \\frac{5}{2}x^2 + 6x + C", "x^3 - 5x^2 + 6x + C", "\\frac{1}{3}x^3 - 5x + 6 + C", "\\frac{1}{3}x^3 - \\frac{5}{2}x^2 + C"], answerContent: "\\frac{1}{3}x^3 - \\frac{5}{2}x^2 + 6x + C", explanation: "" },
+    { id: 30, question: "\\int (x-2)^2 dx", options: ["\\frac{1}{3}x^3 - 2x^2 + 4x + C", "x^2 - 4x + 4 + C", "\\frac{1}{3}(x-2)^3 + C", "x^3 - 2x^2 + 4x + C"], answerContent: "\\frac{1}{3}x^3 - 2x^2 + 4x + C", explanation: "x^2-4x+4を積分" },
+    { id: 31, question: "\\int (x^3 + x^2 + x + 1) dx", options: ["\\frac{1}{4}x^4 + \\frac{1}{3}x^3 + \\frac{1}{2}x^2 + x + C", "x^4 + x^3 + x^2 + x + C", "\\frac{1}{4}x^4 + x^3 + x^2 + x + C", "\\frac{1}{3}x^3 + \\frac{1}{2}x^2 + x + C"], answerContent: "\\frac{1}{4}x^4 + \\frac{1}{3}x^3 + \\frac{1}{2}x^2 + x + C", explanation: "" },
+    { id: 32, question: "\\int (4x^2 - 2x + 1) dx", options: ["\\frac{4}{3}x^3 - x^2 + x + C", "4x^3 - 2x^2 + x + C", "\\frac{4}{3}x^3 - 2x^2 + x + C", "2x^3 - x^2 + x + C"], answerContent: "\\frac{4}{3}x^3 - x^2 + x + C", explanation: "" },
+    { id: 33, question: "\\int (x+2)^3 dx", options: ["\\frac{1}{4}x^4 + 2x^3 + 6x^2 + 8x + C", "\\frac{1}{4}(x+2)^4 + C", "x^4 + 2x^3 + 6x^2 + 8x + C", "x^3 + 6x^2 + 12x + 8 + C"], answerContent: "\\frac{1}{4}x^4 + 2x^3 + 6x^2 + 8x + C", explanation: "x^3+6x^2+12x+8を積分" },
+    { id: 34, question: "\\int (x-3)(x+3) dx", options: ["\\frac{1}{3}x^3 - 9x + C", "x^2 - 9 + C", "\\frac{1}{3}x^3 + 9x + C", "x^3 - 9x + C"], answerContent: "\\frac{1}{3}x^3 - 9x + C", explanation: "x^2-9を積分" },
+    { id: 35, question: "\\int (x^2 + 4x) dx", options: ["\\frac{1}{3}x^3 + 2x^2 + C", "x^3 + 4x^2 + C", "\\frac{1}{3}x^3 + 4x^2 + C", "\\frac{1}{2}x^2 + 4x + C"], answerContent: "\\frac{1}{3}x^3 + 2x^2 + C", explanation: "" },
+    { id: 36, question: "\\int (5x^4 - 3x^2 + 1) dx", options: ["x^5 - x^3 + x + C", "5x^5 - 3x^3 + x + C", "x^5 - 3x^3 + x + C", "x^5 - x^3 + C"], answerContent: "x^5 - x^3 + x + C", explanation: "" },
+    { id: 37, question: "\\int (x+1)^2 dx", options: ["\\frac{1}{3}x^3 + x^2 + x + C", "x^2 + 2x + 1 + C", "\\frac{1}{3}(x+1)^3 + C", "x^3 + x^2 + x + C"], answerContent: "\\frac{1}{3}x^3 + x^2 + x + C", explanation: "x^2+2x+1を積分" },
+    { id: 38, question: "\\int (2x^2 - x + 3) dx", options: ["\\frac{2}{3}x^3 - \\frac{1}{2}x^2 + 3x + C", "2x^3 - x^2 + 3x + C", "\\frac{2}{3}x^3 - x^2 + 3x + C", "x^3 - x^2 + 3x + C"], answerContent: "\\frac{2}{3}x^3 - \\frac{1}{2}x^2 + 3x + C", explanation: "" },
+    { id: 39, question: "\\int (x^2 - x + 1) dx", options: ["\\frac{1}{3}x^3 - \\frac{1}{2}x^2 + x + C", "x^3 - x^2 + x + C", "\\frac{1}{3}x^3 - x^2 + x + C", "\\frac{1}{3}x^3 - \\frac{1}{2}x^2 + C"], answerContent: "\\frac{1}{3}x^3 - \\frac{1}{2}x^2 + x + C", explanation: "" },
+    { id: 40, question: "\\int (x-4)(x+1) dx", options: ["\\frac{1}{3}x^3 - \\frac{3}{2}x^2 - 4x + C", "x^2 - 3x - 4 + C", "\\frac{1}{3}x^3 - 3x^2 - 4x + C", "x^3 - 3x^2 - 4x + C"], answerContent: "\\frac{1}{3}x^3 - \\frac{3}{2}x^2 - 4x + C", explanation: "x^2-3x-4を積分" },
+    { id: 41, question: "\\int (3x^2 + 2x + 5) dx", options: ["x^3 + x^2 + 5x + C", "3x^3 + 2x^2 + 5x + C", "x^3 + 2x^2 + 5x + C", "x^3 + x^2 + C"], answerContent: "x^3 + x^2 + 5x + C", explanation: "" },
+    { id: 42, question: "\\int (x^2-2x) dx", options: ["\\frac{1}{3}x^3 - x^2 + C", "x^3 - 2x^2 + C", "\\frac{1}{3}x^3 - 2x^2 + C", "x^2 - x + C"], answerContent: "\\frac{1}{3}x^3 - x^2 + C", explanation: "" },
+    { id: 43, question: "\\int (1+x)^2 dx", options: ["\\frac{1}{3}x^3 + x^2 + x + C", "1 + 2x + x^2 + C", "\\frac{1}{3}x^3 + x + C", "x + x^2 + C"], answerContent: "\\frac{1}{3}x^3 + x^2 + x + C", explanation: "1+2x+x^2を積分" },
+    { id: 44, question: "\\int (x+2)(x-3) dx", options: ["\\frac{1}{3}x^3 - \\frac{1}{2}x^2 - 6x + C", "x^2 - x - 6 + C", "\\frac{1}{3}x^3 - x^2 - 6x + C", "x^3 - x^2 - 6x + C"], answerContent: "\\frac{1}{3}x^3 - \\frac{1}{2}x^2 - 6x + C", explanation: "x^2-x-6を積分" },
+    { id: 45, question: "\\int (x^2+3x) dx", options: ["\\frac{1}{3}x^3 + \\frac{3}{2}x^2 + C", "x^3 + 3x^2 + C", "\\frac{1}{3}x^3 + 3x^2 + C", "\\frac{1}{2}x^2 + 3x + C"], answerContent: "\\frac{1}{3}x^3 + \\frac{3}{2}x^2 + C", explanation: "" },
+    { id: 46, question: "\\int (2x+5) dx", options: ["x^2 + 5x + C", "2x^2 + 5x + C", "x^2 + C", "x^2 + 5 + C"], answerContent: "x^2 + 5x + C", explanation: "" },
+    { id: 47, question: "\\int (x-2)(x+5) dx", options: ["\\frac{1}{3}x^3 + \\frac{3}{2}x^2 - 10x + C", "x^2 + 3x - 10 + C", "\\frac{1}{3}x^3 + 3x^2 - 10x + C", "x^3 + 3x^2 - 10x + C"], answerContent: "\\frac{1}{3}x^3 + \\frac{3}{2}x^2 - 10x + C", explanation: "x^2+3x-10を積分" },
+    { id: 48, question: "\\int (3x^2-x+1) dx", options: ["x^3 - \\frac{1}{2}x^2 + x + C", "3x^3 - x^2 + x + C", "x^3 - x^2 + x + C", "x^3 - \\frac{1}{2}x^2 + C"], answerContent: "x^3 - \\frac{1}{2}x^2 + x + C", explanation: "" },
+    { id: 49, question: "\\int (x-1)^3 dx", options: ["\\frac{1}{4}x^4 - x^3 + \\frac{3}{2}x^2 - x + C", "\\frac{1}{4}(x-1)^4 + C", "x^4 - x^3 + x^2 - x + C", "\\frac{1}{3}(x-1)^3 + C"], answerContent: "\\frac{1}{4}x^4 - x^3 + \\frac{3}{2}x^2 - x + C", explanation: "x^3-3x^2+3x-1を積分" },
+    { id: 50, question: "\\int (x^2+2) dx", options: ["\\frac{1}{3}x^3 + 2x + C", "x^3 + 2x + C", "\\frac{1}{3}x^3 + C", "\\frac{1}{3}x^3 + 2 + C"], answerContent: "\\frac{1}{3}x^3 + 2x + C", explanation: "" }
+  ];
+  // 定積分 50問
+  const definiteIntegrals = [
+    { id: 51, question: "\\int_0^1 x dx", options: ["\\frac{1}{2}", "1", "0", "\\frac{1}{3}"], answerContent: "\\frac{1}{2}", explanation: "" },
+    { id: 52, question: "\\int_1^2 2x dx", options: ["3", "4", "2", "1"], answerContent: "3", explanation: "[x^2]_1^2 = 4-1" },
+    { id: 53, question: "\\int_{-1}^1 x^2 dx", options: ["\\frac{2}{3}", "0", "\\frac{1}{3}", "1"], answerContent: "\\frac{2}{3}", explanation: "2*\\int_0^1 x^2" },
+    { id: 54, question: "\\int_0^2 (3x^2-1) dx", options: ["6", "8", "7", "5"], answerContent: "6", explanation: "[x^3-x]_0^2 = 8-2" },
+    { id: 55, question: "\\int_1^3 (x+1) dx", options: ["6", "4", "8", "5"], answerContent: "6", explanation: "[1/2x^2+x]_1^3 = (4.5+3)-(0.5+1)" },
+    { id: 56, question: "\\int_{-2}^2 x^3 dx", options: ["0", "8", "16", "4"], answerContent: "0", explanation: "奇関数" },
+    { id: 57, question: "\\int_0^1 (x^2+x) dx", options: ["\\frac{5}{6}", "1", "\\frac{1}{2}", "0"], answerContent: "\\frac{5}{6}", explanation: "[1/3x^3+1/2x^2]_0^1 = 1/3+1/2" },
+    { id: 58, question: "\\int_1^2 (x-1)^2 dx", options: ["\\frac{1}{3}", "1", "0", "\\frac{2}{3}"], answerContent: "\\frac{1}{3}", explanation: "[1/3(x-1)^3]_1^2 = 1/3-0" },
+    { id: 59, question: "\\int_{-1}^1 (2x^2+1) dx", options: ["\\frac{10}{3}", "2", "4", "\\frac{7}{3}"], answerContent: "\\frac{10}{3}", explanation: "2*\\int_0^1 (2x^2+1) = 2*[2/3x^3+x]_0^1 = 2*(2/3+1)" },
+    { id: 60, question: "\\int_0^3 x^2 dx", options: ["9", "27", "3", "6"], answerContent: "9", explanation: "[1/3x^3]_0^3" },
+    { id: 61, question: "\\int_1^2 (x^2-x) dx", options: ["\\frac{5}{6}", "\\frac{1}{2}", "1", "\\frac{2}{3}"], answerContent: "\\frac{5}{6}", explanation: "[1/3x^3-1/2x^2]_1^2 = (8/3-2)-(1/3-1/2) = 2/3 - (-1/6) = 5/6" },
+    { id: 62, question: "\\int_{-1}^1 (x^3-x) dx", options: ["0", "1", "-1", "2"], answerContent: "0", explanation: "奇関数" },
+    { id: 63, question: "\\int_0^1 (x^2-2x+1) dx", options: ["\\frac{1}{3}", "1", "0", "\\frac{1}{2}"], answerContent: "\\frac{1}{3}", explanation: "[1/3x^3-x^2+x]_0^1 = 1/3-1+1" },
+    { id: 64, question: "\\int_1^3 (x-2) dx", options: ["0", "1", "-1", "2"], answerContent: "0", explanation: "[1/2x^2-2x]_1^3 = (4.5-6)-(0.5-2) = -1.5 - (-1.5)" },
+    { id: 65, question: "\\int_{-1}^1 (x^2+x+1) dx", options: ["\\frac{8}{3}", "2", "0", "\\frac{4}{3}"], answerContent: "\\frac{8}{3}", explanation: "2*\\int_0^1 (x^2+1) = 2*[1/3x^3+x]_0^1 = 2*(1/3+1)" },
+    { id: 66, question: "\\int_0^2 (x+2)(x-1) dx", options: ["\\frac{2}{3}", "2", "0", "1"], answerContent: "\\frac{2}{3}", explanation: "x^2+x-2を積分. [1/3x^3+1/2x^2-2x]_0^2 = 8/3+2-4 = 8/3-2 = 2/3" },
+    { id: 67, question: "\\int_1^2 (2x+3) dx", options: ["6", "5", "7", "4"], answerContent: "6", explanation: "[x^2+3x]_1^2 = (4+6)-(1+3) = 10-4" },
+    { id: 68, question: "\\int_{-2}^2 (x^4-1) dx", options: ["\\frac{44}{5}", "0", "\\frac{22}{5}", "8"], answerContent: "\\frac{44}{5}", explanation: "2*\\int_0^2 (x^4-1) = 2*[1/5x^5-x]_0^2 = 2*(32/5-2) = 2*(22/5)" },
+    { id: 69, question: "\\int_0^1 (x+1)^2 dx", options: ["\\frac{7}{3}", "1", "2", "\\frac{4}{3}"], answerContent: "\\frac{7}{3}", explanation: "[1/3(x+1)^3]_0^1 = 1/3*(8-1)" },
+    { id: 70, question: "\\int_1^3 (x^2+2) dx", options: ["\\frac{38}{3}", "12", "11", "13"], answerContent: "\\frac{38}{3}", explanation: "[1/3x^3+2x]_1^3 = (9+6)-(1/3+2) = 15 - 7/3 = 38/3" },
+    { id: 71, question: "\\int_{-1}^1 (x^2-x) dx", options: ["\\frac{2}{3}", "0", "\\frac{1}{3}", "1"], answerContent: "\\frac{2}{3}", explanation: "2*\\int_0^1 x^2 = 2/3" },
+    { id: 72, question: "\\int_0^2 x(x-2) dx", options: ["-\\frac{4}{3}", "0", "\\frac{4}{3}", "-2"], answerContent: "-\\frac{4}{3}", explanation: "[1/3x^3-x^2]_0^2 = 8/3-4 = -4/3" },
+    { id: 73, question: "\\int_1^2 (3x^2-2x+1) dx", options: ["5", "6", "4", "7"], answerContent: "5", explanation: "[x^3-x^2+x]_1^2 = (8-4+2)-(1-1+1) = 6-1" },
+    { id: 74, question: "\\int_{-1}^1 (x^4+x^2+1) dx", options: ["\\frac{46}{15}", "3", "2", "\\frac{23}{15}"], answerContent: "\\frac{46}{15}", explanation: "2*\\int_0^1 (x^4+x^2+1) = 2*[3/15+5/15+15/15] = 2*23/15" },
+    { id: 75, question: "\\int_0^1 (x+2) dx", options: ["2.5", "2", "3", "1.5"], answerContent: "2.5", explanation: "[1/2x^2+2x]_0^1 = 0.5+2" },
+    { id: 76, question: "\\int_1^2 (x-3) dx", options: ["-1.5", "-1", "-2", "0"], answerContent: "-1.5", explanation: "[1/2x^2-3x]_1^2 = (2-6)-(0.5-3) = -4 - (-2.5) = -1.5" },
+    { id: 77, question: "\\int_{-2}^2 (x^2-4) dx", options: ["-\\frac{32}{3}", "0", "-\\frac{16}{3}", "-8"], answerContent: "-\\frac{32}{3}", explanation: "2*\\int_0^2 (x^2-4) = 2*[1/3x^3-4x]_0^2 = 2*(8/3-8) = 2*(-16/3)" },
+    { id: 78, question: "\\int_0^3 (x-1)^2 dx", options: ["3", "9", "1", "6"], answerContent: "3", explanation: "[1/3(x-1)^3]_0^3 = 1/3*(8 - (-1)) = 1/3*9 = 3" },
+    { id: 79, question: "\\int_1^2 (x^2+1) dx", options: ["\\frac{10}{3}", "3", "4", "\\frac{7}{3}"], answerContent: "\\frac{10}{3}", explanation: "[1/3x^3+x]_1^2 = (8/3+2)-(1/3+1) = 14/3-4/3" },
+    { id: 80, question: "\\int_{-1}^1 (x^5+x^3+x) dx", options: ["0", "1", "-1", "2"], answerContent: "0", explanation: "奇関数" },
+    { id: 81, question: "\\int_0^1 (2x^3-x) dx", options: ["0", "0.5", "-0.5", "1"], answerContent: "0", explanation: "[1/2x^4-1/2x^2]_0^1 = 1/2-1/2 = 0" },
+    { id: 82, question: "\\int_1^3 (x^2-4) dx", options: ["\\frac{2}{3}", "1", "0", "\\frac{4}{3}"], answerContent: "\\frac{2}{3}", explanation: "[1/3x^3-4x]_1^3 = (9-12)-(1/3-4) = -3 - (-11/3) = 2/3" },
+    { id: 83, question: "\\int_{-1}^1 (3x^2-2) dx", options: ["-2", "0", "2", "-1"], answerContent: "-2", explanation: "2*\\int_0^1 (3x^2-2) = 2*[x^3-2x]_0^1 = 2*(1-2)" },
+    { id: 84, question: "\\int_0^2 (x^2+x) dx", options: ["\\frac{14}{3}", "4", "5", "\\frac{10}{3}"], answerContent: "\\frac{14}{3}", explanation: "[1/3x^3+1/2x^2]_0^2 = 8/3+2 = 14/3" },
+    { id: 85, question: "\\int_1^2 (x-2)^2 dx", options: ["\\frac{1}{3}", "1", "0", "2"], answerContent: "\\frac{1}{3}", explanation: "[1/3(x-2)^3]_1^2 = 0 - (-1/3)" },
+    { id: 86, question: "\\int_{-1}^1 (x^2+2) dx", options: ["\\frac{14}{3}", "4", "6", "\\frac{7}{3}"], answerContent: "\\frac{14}{3}", explanation: "2*\\int_0^1 (x^2+2) = 2*[1/3+2] = 2*7/3" },
+    { id: 87, question: "\\int_0^1 (x^3-1) dx", options: ["-0.75", "-1", "0", "-0.5"], answerContent: "-0.75", explanation: "[1/4x^4-x]_0^1 = 1/4-1" },
+    { id: 88, question: "\\int_1^3 (2x-4) dx", options: ["0", "1", "2", "-1"], answerContent: "0", explanation: "[x^2-4x]_1^3 = (9-12)-(1-4) = -3 - (-3)" },
+    { id: 89, question: "\\int_{-2}^2 x^2 dx", options: ["\\frac{16}{3}", "0", "\\frac{8}{3}", "8"], answerContent: "\\frac{16}{3}", explanation: "2*\\int_0^2 x^2 = 2*8/3" },
+    { id: 90, question: "\\int_0^1 (2x+1)^2 dx", options: ["\\frac{13}{3}", "3", "4", "\\frac{7}{3}"], answerContent: "\\frac{13}{3}", explanation: "[1/6(2x+1)^3]_0^1 = 1/6*(27-1) = 26/6 = 13/3" },
+    { id: 91, question: "\\int_1^2 (x^2+2x) dx", options: ["\\frac{16}{3}", "5", "6", "\\frac{14}{3}"], answerContent: "\\frac{16}{3}", explanation: "[1/3x^3+x^2]_1^2 = (8/3+4)-(1/3+1) = 20/3-4/3 = 16/3" },
+    { id: 92, question: "\\int_{-1}^1 (x^4-x^2) dx", options: ["-\\frac{4}{15}", "0", "-\\frac{2}{15}", "1"], answerContent: "-\\frac{4}{15}", explanation: "2*\\int_0^1 (x^4-x^2) = 2*[1/5-1/3] = 2*(-2/15)" },
+    { id: 93, question: "\\int_0^2 (x-1) dx", options: ["0", "1", "2", "-1"], answerContent: "0", explanation: "[1/2x^2-x]_0^2 = 2-2" },
+    { id: 94, question: "\\int_1^3 x^2 dx", options: ["\\frac{26}{3}", "9", "8", "\\frac{20}{3}"], answerContent: "\\frac{26}{3}", explanation: "[1/3x^3]_1^3 = 9-1/3" },
+    { id: 95, question: "\\int_{-1}^1 (x^2+x) dx", options: ["\\frac{2}{3}", "0", "1", "\\frac{1}{3}"], answerContent: "\\frac{2}{3}", explanation: "2*\\int_0^1 x^2 = 2/3" },
+    { id: 96, question: "\\int_0^1 (4x^3+x) dx", options: ["1.5", "1", "2", "0.5"], answerContent: "1.5", explanation: "[x^4+1/2x^2]_0^1 = 1+0.5" },
+    { id: 97, question: "\\int_1^2 (3x-2) dx", options: ["2.5", "2", "3", "1.5"], answerContent: "2.5", explanation: "[3/2x^2-2x]_1^2 = (6-4)-(1.5-2) = 2 - (-0.5)" },
+    { id: 98, question: "\\int_{-2}^2 (x^3+1) dx", options: ["4", "0", "8", "2"], answerContent: "4", explanation: "2*\\int_0^2 1 = 4" },
+    { id: 99, question: "\\int_0^1 (x^2-x+2) dx", options: ["\\frac{11}{6}", "2", "1", "\\frac{5}{6}"], answerContent: "\\frac{11}{6}", explanation: "[1/3x^3-1/2x^2+2x]_0^1 = (2-3+12)/6 = 11/6" },
+    { id: 100, question: "\\int_1^2 (x+2)^2 dx", options: ["\\frac{37}{3}", "12", "13", "\\frac{27}{3}"], answerContent: "\\frac{37}{3}", explanation: "[1/3(x+2)^3]_1^2 = 1/3*(64-27) = 37/3" }
+  ];
+  let currentProblems = [];
+  let currentQuestionIndex = 0;
+  let score = 0;
+  let userAnswers = [];
+  // GASのWebアプリURL
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzz6wXPkk1clV3WfvaDlXxIczVZ1FvWp7Gw7G7Nf5arMhtoAAaLm_ar2nxzOF6kClWY/exec';
+  const startContainer = document.getElementById('start-container');
+  const quizContainer = document.getElementById('quiz-container');
+  const resultContainer = document.getElementById('result-container');
+  const startBtn = document.getElementById('start-btn');
+  const questionText = document.getElementById('question-text');
+  const optionsGrid = document.getElementById('options-grid');
+  const progressFill = document.getElementById('progress-fill');
+  const finalScore = document.getElementById('final-score');
+  const resultMessage = document.getElementById('result-message');
+  const sendingStatus = document.getElementById('sending-status');
+  const restartBtn = document.getElementById('restart-btn');
+  startBtn.onclick = () => {
+    startContainer.style.display = 'none';
+    quizContainer.style.display = 'block';
+    initQuiz();
+  };
+  function initQuiz() {
+    // 100問の中からランダムに10問選ぶぜ！ (不定積分5問 + 定積分5問)
+    const selectedIndefinite = shuffleArray(indefiniteIntegrals).slice(0, 5);
+    const selectedDefinite = shuffleArray(definiteIntegrals).slice(0, 5);
+    currentProblems = shuffleArray([...selectedIndefinite, ...selectedDefinite]);
+    currentQuestionIndex = 0;
+    score = 0;
+    userAnswers = [];
+    showQuestion();
+  }
+  // 配列をシャッフルする関数 (Fisher-Yates)
+  function shuffleArray(array) {
+    const newArr = [...array];
+    for (let i = newArr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+    }
+    return newArr;
+  }
+  function showQuestion() {
+    const problem = currentProblems[currentQuestionIndex];
+    questionText.innerHTML = `問 ${currentQuestionIndex + 1}: <br> $${problem.question}$`;
+    const shuffledOptions = shuffleArray(problem.options);
+    optionsGrid.innerHTML = '';
+    shuffledOptions.forEach((option) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerHTML = `$${option}$`;
+      btn.dataset.content = option;
+      btn.onclick = () => handleAnswer(option);
+      optionsGrid.appendChild(btn);
+    });
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise();
+    }
+    const progress = ((currentQuestionIndex) / currentProblems.length) * 100;
+    progressFill.style.width = `${progress}%`;
+  }
+  async function handleAnswer(selectedContent) {
+    const problem = currentProblems[currentQuestionIndex];
+    const isCorrect = selectedContent === problem.answerContent;
+    if (isCorrect) score++;
+    userAnswers.push({
+      questionId: problem.id,
+      selected: selectedContent,
+      correct: isCorrect
+    });
+    const btns = optionsGrid.querySelectorAll('.option-btn');
+    btns.forEach(btn => {
+      btn.disabled = true;
+      const content = btn.dataset.content;
+      if (content === selectedContent) {
+        btn.classList.add(isCorrect ? 'correct' : 'wrong');
       }
-    ];
-    let currentQuestionIndex = 0;
-    let score = 0;
-    let userAnswers = [];
-    // GASのWebアプリURL
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzz6wXPkk1clV3WfvaDlXxIczVZ1FvWp7Gw7G7Nf5arMhtoAAaLm_ar2nxzOF6kClWY/exec';
-    const questionText = document.getElementById('question-text');
-    const optionsGrid = document.getElementById('options-grid');
-    const progressFill = document.getElementById('progress-fill');
-    const quizContainer = document.getElementById('quiz-container');
-    const resultContainer = document.getElementById('result-container');
-    const finalScore = document.getElementById('final-score');
-    const resultMessage = document.getElementById('result-message');
-    const sendingStatus = document.getElementById('sending-status');
-    const restartBtn = document.getElementById('restart-btn');
-    function initQuiz() {
-      currentQuestionIndex = 0;
-      score = 0;
-      userAnswers = [];
-      quizContainer.style.display = 'block';
-      resultContainer.style.display = 'none';
-      showQuestion();
-    }
-    // 配列をシャッフルする関数 (Fisher-Yates)
-    function shuffleArray(array) {
-      const newArr = [...array];
-      for (let i = newArr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+      if (content === problem.answerContent) {
+        btn.classList.add('correct');
       }
-      return newArr;
-    }
-    function showQuestion() {
-      const problem = problems[currentQuestionIndex];
-      questionText.innerHTML = `問 ${currentQuestionIndex + 1}: <br> $${problem.question}$`;
-      // 選択肢をランダムに並び替える
-      const shuffledOptions = shuffleArray(problem.options);
-      optionsGrid.innerHTML = '';
-      shuffledOptions.forEach((option) => {
-        const btn = document.createElement('button');
-        btn.className = 'option-btn';
-        btn.innerHTML = `$${option}$`;
-        // カスタムデータ属性に内容を保存しておくぜ
-        btn.dataset.content = option;
-        btn.onclick = () => handleAnswer(option); // 選択した「内容」で判定
-        optionsGrid.appendChild(btn);
-      });
-      // MathJaxに再レンダリングを依頼
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise();
-      }
-      // プログレスバー更新
-      const progress = ((currentQuestionIndex) / problems.length) * 100;
-      progressFill.style.width = `${progress}%`;
-    }
-    async function handleAnswer(selectedContent) {
-      const problem = problems[currentQuestionIndex];
-      const isCorrect = selectedContent === problem.answerContent;
-      if (isCorrect) score++;
-      userAnswers.push({
-        questionId: problem.id,
-        selected: selectedContent,
-        correct: isCorrect
-      });
-      // ボタンの色を変えるフィードバック
-      const btns = optionsGrid.querySelectorAll('.option-btn');
-      btns.forEach(btn => {
-        btn.disabled = true; // 連続クリック防止
-        const content = btn.dataset.content;
-        // クリックしたボタンへのフィードバック
-        if (content === selectedContent) {
-          btn.classList.add(isCorrect ? 'correct' : 'wrong');
-        }
-        // 正解のボタンを常に緑にする（不正解を選んだ時も正解を教えるぜ）
-        if (content === problem.answerContent) {
-          btn.classList.add('correct');
-        }
-      });
-      // 少し待ってから次の問題へ
-      setTimeout(() => {
-        currentQuestionIndex++;
-        if (currentQuestionIndex < problems.length) {
-          showQuestion();
-        } else {
-          showResult();
-        }
-      }, 1000);
-    }
-    function showResult() {
-      quizContainer.style.display = 'none';
-      resultContainer.style.display = 'block';
-      progressFill.style.width = '100%';
-      finalScore.innerText = `${score} / ${problems.length}`;
-      if (score === 10) {
-        resultMessage.innerText = "完璧だ！お前はもう積分マスターだってばよ！";
-      } else if (score >= 7) {
-        resultMessage.innerText = "いい調子だ！さらに上を目指そうぜ！";
+    });
+    setTimeout(() => {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < currentProblems.length) {
+        showQuestion();
       } else {
-        resultMessage.innerText = "まだまだ修行が必要だな。諦めんなよ！";
+        showResult();
       }
-      sendToSpreadsheet();
+    }, 1000);
+  }
+  function showResult() {
+    quizContainer.style.display = 'none';
+    resultContainer.style.display = 'block';
+    progressFill.style.width = '100%';
+    finalScore.innerText = `${score} / ${currentProblems.length}`;
+    if (score === 10) {
+      resultMessage.innerText = "完璧だ！お前はもう積分マスターだぜ！";
+    } else if (score >= 7) {
+      resultMessage.innerText = "いい調子だ！さらに上を目指そうぜ！";
+    } else {
+      resultMessage.innerText = "まだまだ修行が必要だな。諦めんな！";
     }
-    async function sendToSpreadsheet() {
-      if (!GAS_URL) {
-        sendingStatus.innerText = "（スプレッドシート連携URLが未設定なので送信をスキップしたぜ）";
-        return;
-      }
-      sendingStatus.innerText = "結果をスプレッドシートに送信中...";
-      const data = {
-        score: score,
-        total: problems.length,
-        timestamp: new Date().toISOString(),
-        answers: userAnswers
-      };
-      try {
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
-        });
-        sendingStatus.innerText = "結果をスプレッドシートに保存したぜ！";
-      } catch (error) {
-        console.error('Error:', error);
-        sendingStatus.innerText = "送信に失敗しちまった...URLを確認してくれ。";
-      }
+    sendToSpreadsheet();
+  }
+  async function sendToSpreadsheet() {
+    if (!GAS_URL) {
+      sendingStatus.innerText = "（URL未設定）";
+      return;
     }
-    restartBtn.onclick = initQuiz;
-    // 初期化
-    window.onload = initQuiz;
-  </script>
+    sendingStatus.innerText = "結果を送信中...";
+    const data = {
+      score: score,
+      total: currentProblems.length,
+      timestamp: new Date().toISOString()
+    };
+    try {
+      await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      sendingStatus.innerText = "スプレッドシートに保存したぜ！";
+    } catch (error) {
+      console.error('Error:', error);
+      sendingStatus.innerText = "送信に失敗したぜ...。";
+    }
+  }
+  restartBtn.onclick = () => {
+    resultContainer.style.display = 'none';
+    startContainer.style.display = 'block';
+  };
+</script>
 </body>
 </html>
